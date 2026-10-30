@@ -17,7 +17,8 @@
 > 2. Block with **REJECT, not DROP**. Silently dropping its outbound traffic made one matrix hang waiting on its own DNS and cloud connections, run out of memory and fault. A reject lets it fail fast.
 > 3. Never port forward to it, and never expose its web UI, this integration's listeners or Home Assistant's access to it to the internet.
 > 4. Do not trust DNS for it: serve it no resolver, or one you control that cannot be poisoned. Confusing its DNS or routing is how an attacker gets in front of the update request.
-> 5. If you cannot isolate it, do not connect it to a network at all. Replacing it is cheaper than a compromised LAN.
+> 5. **If your router cannot firewall it, a weaker fallback is plausible:** give the matrix a manual (not DHCP) network configuration on the same subnet as Home Assistant, with a gateway that is invalid, empty or genuinely unused, and no external DNS. With no working route off the subnet, the matrix cannot reach the internet or the vendor's servers, while Home Assistant on the same subnet still can. I have not proven this is sufficient on this firmware. It is **not isolation**: it does not protect other devices on that network, a separate IPv6 route may remain, and a compromised or malicious matrix could use another router it finds on the same segment. Use it only if nothing better is possible, and see the [fallback details](docs/NETWORK-SECURITY.md#basic-fallback-static-ipv4-with-no-working-gateway).
+> 6. If you cannot isolate it at all, do not connect it to a network. Replacing it is cheaper than a compromised LAN.
 >
 > Installing this integration does not make the matrix safer. It does not change the matrix's settings or block anything. See [network protection](docs/NETWORK-SECURITY.md).
 
