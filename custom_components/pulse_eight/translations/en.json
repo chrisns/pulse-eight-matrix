@@ -1,0 +1,72 @@
+{
+  "title": "Pulse-Eight Matrix",
+  "config": {
+    "flow_title": "Pulse-Eight {name}",
+    "step": {
+      "user": {
+        "title": "Connect to a Pulse-Eight matrix",
+        "description": "Enter the matrix IPv4 address or hostname. No router changes or vendor account are needed. Status updates use local UDP; commands use HTTP. Internet blocking and network isolation are strongly recommended.",
+        "data": {
+          "host": "Matrix address",
+          "password": "Admin password (optional)"
+        }
+      },
+      "confirm": {
+        "title": "Discovered Pulse-Eight matrix",
+        "description": "Connect to the discovered matrix at {host}. Confirm its address; a Docker proxy may report its own address instead.",
+        "data": {
+          "host": "Matrix address",
+          "password": "Admin password (optional)"
+        }
+      },
+      "reconfigure": {
+        "title": "Update matrix connection",
+        "data": {
+          "host": "Matrix address",
+          "password": "Admin password (optional)"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Update admin password",
+        "data": {
+          "password": "Admin password (optional)"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Cannot communicate with the matrix. Check its address and wait for other requests to finish.",
+      "invalid_auth": "The admin password was rejected.",
+      "invalid_host": "Use an IPv4 address or hostname without http://, port or path."
+    },
+    "abort": {
+      "already_configured": "This matrix is already configured.",
+      "not_supported": "This discovery address is not supported.",
+      "unique_id_mismatch": "This is a different matrix.",
+      "reconfigure_successful": "Connection updated.",
+      "reauth_successful": "Password updated."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Pulse-Eight transport options",
+        "description": "UDP is the normal update transport. Optional cloud listeners accept local connections and monitoring uploads; they never contact the vendor or change your router. Configure redirection separately. Raw UDP events are diagnostic data, not CEC receive events. Daily advisory firmware checks contact the vendor from HA and send the matrix serial, model, hardware family and firmware version over HTTP. They do not send logs, download or install firmware. Disable checks for a fully offline installation.",
+        "data": {
+          "udp_port": "UDP listen port",
+          "stale_seconds": "Connection timeout (seconds)",
+          "cloud_enabled": "Enable optional local cloud listeners",
+          "cloud_port": "Local cloud TCP port",
+          "monitoring_port": "Monitoring HTTP port",
+          "source_filter": "Only accept listener connections from the matrix",
+          "trusted_sources": "Additional trusted source addresses, comma separated (for example a NAT gateway)",
+          "raw_events": "Publish diagnostic UDP events",
+          "firmware_check_enabled": "Check vendor firmware metadata daily and notify",
+          "firmware_hardware": "Firmware hardware family override (blank for automatic)"
+        }
+      }
+    },
+    "error": {
+      "port_conflict": "UDP, cloud TCP and monitoring ports must differ."
+    }
+  }
+}

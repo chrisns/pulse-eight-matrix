@@ -1,0 +1,39 @@
+name: Validate
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: "0 6 * * 1"
+permissions:
+  contents: read
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: python -m pip install -r requirements-dev.txt
+      - name: Host tests (HA runtime tests are skipped without Home Assistant)
+        run: python -m unittest discover -s tests -v
+  ha-runtime-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Tests inside the Home Assistant image
+        run: |
+          docker run --rm -v "$PWD":/repo -w /repo --entrypoint python3 \
+            ghcr.io/home-assistant/home-assistant:2026.10.2 -m unittest discover -s tests -v
+  hassfest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: home-assistant/actions/hassfest@master
+  hacs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hacs/action@main
+        with:
+          category: integration

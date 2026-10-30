@@ -1,0 +1,318 @@
+{
+  "send_cec": {
+    "name": "Send raw CEC frame",
+    "description": "Submit one colon-separated CEC frame. Acceptance does not prove a device received it. There is no automatic retry.",
+    "fields": {
+      "device_id": {
+        "name": "Matrix device",
+        "required": true,
+        "selector": {
+          "device": {
+            "integration": "pulse_eight"
+          }
+        }
+      },
+      "mode": {
+        "name": "Port type",
+        "default": "Output",
+        "selector": {
+          "select": {
+            "options": [
+              "Input",
+              "Output"
+            ]
+          }
+        }
+      },
+      "port": {
+        "name": "Physical port number",
+        "description": "One-based numbering, as printed on the matrix.",
+        "required": true,
+        "selector": {
+          "number": {
+            "min": 1,
+            "max": 32,
+            "mode": "box"
+          }
+        }
+      },
+      "frame": {
+        "name": "CEC frame",
+        "required": true,
+        "example": "40:8F",
+        "selector": {
+          "text": {}
+        }
+      }
+    }
+  },
+  "set_route": {
+    "name": "Route an input to an output",
+    "fields": {
+      "device_id": {
+        "name": "Matrix device",
+        "description": "Only needed when ports are given as numbers.",
+        "required": false,
+        "selector": {
+          "device": {
+            "integration": "pulse_eight"
+          }
+        }
+      },
+      "output": {
+        "name": "Output",
+        "description": "Pick the display.",
+        "required": true,
+        "selector": {
+          "entity": {
+            "integration": "pulse_eight",
+            "domain": "media_player",
+            "device_class": "tv"
+          }
+        }
+      },
+      "input": {
+        "name": "Input",
+        "description": "Pick the source.",
+        "required": true,
+        "selector": {
+          "entity": {
+            "integration": "pulse_eight",
+            "domain": "media_player",
+            "device_class": "receiver"
+          }
+        }
+      }
+    }
+  },
+  "set_edid": {
+    "name": "Set input EDID profile",
+    "description": "May renegotiate the input video signal. Profile IDs: 11 dynamic, 0 1080p stereo, 2 4K, 3 Dolby 5.1, 4 720p, 5 1080p 7.1, 6 4K 7.1, 7/8 HDR on supported models; 101 onward clone outputs.",
+    "fields": {
+      "device_id": {
+        "name": "Matrix device",
+        "description": "Only needed when ports are given as numbers.",
+        "required": false,
+        "selector": {
+          "device": {
+            "integration": "pulse_eight"
+          }
+        }
+      },
+      "input": {
+        "name": "Input",
+        "description": "Pick the source.",
+        "required": true,
+        "selector": {
+          "entity": {
+            "integration": "pulse_eight",
+            "domain": "media_player",
+            "device_class": "receiver"
+          }
+        }
+      },
+      "profile": {
+        "name": "EDID profile ID",
+        "required": true,
+        "selector": {
+          "number": {
+            "min": 0,
+            "max": 132,
+            "mode": "box"
+          }
+        }
+      }
+    }
+  },
+  "get_port_details": {
+    "name": "Read port and receiver details",
+    "fields": {
+      "device_id": {
+        "name": "Matrix device",
+        "required": true,
+        "selector": {
+          "device": {
+            "integration": "pulse_eight"
+          }
+        }
+      },
+      "mode": {
+        "name": "Port type",
+        "default": "Output",
+        "selector": {
+          "select": {
+            "options": [
+              "Input",
+              "Output"
+            ]
+          }
+        }
+      },
+      "port": {
+        "name": "Physical port number",
+        "description": "One-based numbering, as printed on the matrix.",
+        "required": true,
+        "selector": {
+          "number": {
+            "min": 1,
+            "max": 32,
+            "mode": "box"
+          }
+        }
+      },
+      "transport": {
+        "name": "Transport",
+        "default": "http",
+        "selector": {
+          "select": {
+            "options": [
+              "http",
+              "cloud"
+            ]
+          }
+        }
+      },
+      "include_receiver": {
+        "name": "Include HDBaseT receiver",
+        "default": false,
+        "selector": {
+          "boolean": {}
+        }
+      }
+    }
+  },
+  "read_edid": {
+    "name": "Read EDID capabilities",
+    "description": "Returns display information, timings, audio codecs, HDMI and HDR metadata. Does not write or upload an EDID.",
+    "fields": {
+      "device_id": {
+        "name": "Matrix device",
+        "required": true,
+        "selector": {
+          "device": {
+            "integration": "pulse_eight"
+          }
+        }
+      },
+      "mode": {
+        "name": "Port type",
+        "default": "Output",
+        "selector": {
+          "select": {
+            "options": [
+              "Input",
+              "Output"
+            ]
+          }
+        }
+      },
+      "port": {
+        "name": "Physical port number",
+        "description": "One-based numbering, as printed on the matrix.",
+        "required": true,
+        "selector": {
+          "number": {
+            "min": 1,
+            "max": 32,
+            "mode": "box"
+          }
+        }
+      },
+      "transport": {
+        "name": "Transport",
+        "default": "http",
+        "selector": {
+          "select": {
+            "options": [
+              "http",
+              "cloud"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "refresh": {
+    "name": "Refresh detail snapshots",
+    "description": "Perform one serialized health and port inventory. Normal updates do not poll.",
+    "fields": {
+      "device_id": {
+        "name": "Matrix device",
+        "required": true,
+        "selector": {
+          "device": {
+            "integration": "pulse_eight"
+          }
+        }
+      }
+    }
+  },
+  "get_status": {
+    "name": "Get cached status",
+    "description": "Returns cached state without a device request. Names and device identifiers are included.",
+    "fields": {
+      "device_id": {
+        "name": "Matrix device",
+        "required": true,
+        "selector": {
+          "device": {
+            "integration": "pulse_eight"
+          }
+        }
+      }
+    }
+  },
+  "set_ir_profile": {
+    "name": "Set output IR profile",
+    "fields": {
+      "device_id": {
+        "name": "Matrix device",
+        "description": "Only needed when ports are given as numbers.",
+        "required": false,
+        "selector": {
+          "device": {
+            "integration": "pulse_eight"
+          }
+        }
+      },
+      "output": {
+        "name": "Output",
+        "description": "Pick the display.",
+        "required": true,
+        "selector": {
+          "entity": {
+            "integration": "pulse_eight",
+            "domain": "media_player",
+            "device_class": "tv"
+          }
+        }
+      },
+      "profile": {
+        "name": "Existing IR profile ID",
+        "required": true,
+        "selector": {
+          "number": {
+            "min": 0,
+            "max": 65535,
+            "mode": "box"
+          }
+        }
+      }
+    }
+  },
+  "check_firmware": {
+    "name": "Check vendor firmware availability",
+    "description": "Checks advisory metadata from HA; never downloads or installs an image. Limited to one manual check per minute. Daily checking must be enabled in options.",
+    "fields": {
+      "device_id": {
+        "name": "Matrix device",
+        "required": true,
+        "selector": {
+          "device": {
+            "integration": "pulse_eight"
+          }
+        }
+      }
+    }
+  }
+}

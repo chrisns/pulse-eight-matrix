@@ -1,0 +1,34 @@
+{
+  "domain": "pulse_eight",
+  "name": "Pulse-Eight Matrix",
+  "codeowners": [
+    "@chrisns"
+  ],
+  "config_flow": true,
+  "dependencies": [
+    "network",
+    "persistent_notification"
+  ],
+  "dhcp": [
+    {
+      "hostname": "p8sn*",
+      "macaddress": "001582*"
+    }
+  ],
+  "documentation": "https://github.com/chrisns/pulse-eight-matrix",
+  "integration_type": "device",
+  "iot_class": "local_push",
+  "issue_tracker": "https://github.com/chrisns/pulse-eight-matrix/issues",
+  "requirements": [],
+  "ssdp": [
+    {
+      "manufacturer": "Pulse Eight",
+      "deviceType": "urn:schemas-upnp-org:device:Basic:1"
+    },
+    {
+      "manufacturer": "Pulse-Eight",
+      "deviceType": "urn:schemas-upnp-org:device:Basic:1"
+    }
+  ],
+  "version": "0.4.0"
+}
