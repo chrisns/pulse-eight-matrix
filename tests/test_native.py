@@ -292,7 +292,7 @@ class CloudTests(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
         self.hub = types.SimpleNamespace(
             serial="P8SN123",
-            options={"cloud_port": 0, "monitoring_port": 0, "source_filter": True},
+            options={"cloud_port": 0, "monitoring_port": 0},
             source_ips={"127.0.0.1"},
             client=types.SimpleNamespace(lock=asyncio.Lock()),
             state=MatrixState(),
@@ -379,10 +379,11 @@ class CloudTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(await self.post(b"not json"), 403)
         self.assertIsNone(self.hub.state.last_seen)
 
-    async def test_filter_is_off_by_default(self):
+    async def test_filter_is_always_on(self):
+        # A persisted pre-0.4.1 option must not be able to reopen the listeners.
         self.hub.options["source_filter"] = False
         self.hub.source_ips = set()
-        self.assertEqual(await self.post(b'{"Temperature0":50}'), 200)
+        self.assertEqual(await self.post(b'{"Temperature0":50}'), 403)
 
     async def test_monitoring_fails_closed_without_known_source(self):
         self.hub.source_ips = set()

@@ -91,14 +91,12 @@ class LocalCloud:
             raise
 
     def allowed(self, peer):
-        """Optional source-IP filter (the `source_filter` option, off by default).
+        """Accept only the matrix or an explicitly trusted NAT/proxy address.
 
-        When on, only the matrix (and any `trusted_sources` NAT/proxy address) may
-        connect, and with no known source nothing is accepted. The serial is an
-        identifier, not authentication, so this is the only gate before parsing.
+        The serial is broadcast on the LAN and is an identifier, not
+        authentication, so source-address filtering must never be optional.
+        With no known source this deliberately fails closed.
         """
-        if not self.hub.options.get("source_filter"):
-            return True
         peer = _normalise(peer)
         extra = str(self.hub.options.get("trusted_sources") or "").split(",")
         known = {_normalise(i) for i in (*self.hub.source_ips, *map(str.strip, extra))}

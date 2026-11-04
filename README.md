@@ -57,7 +57,6 @@ DHCP and SSDP discovery are supported, and always ask you to confirm. Nothing is
 | EDID information | An action returning display metadata, timings, audio, HDMI and HDR data |
 | IR profile selection | Existing profiles only (see limits) |
 | CEC settings and front-panel LEDs | Switches and selects |
-| Audio volume and delay | Number entities on models that report audio DSP ports (untested on hardware) |
 | Firmware availability | A daily advisory check, a read-only update entity and one notification per offered version. Nothing is downloaded or installed |
 | Crash reports | Captured to files and announced with a notification (see below) |
 
@@ -109,7 +108,7 @@ That changes the matrix's configuration, so save the old settings first. Never e
 
 **Crash reports.** These matrices can fault and reboot. When one does, its next monitoring upload carries a crash report: fault type, registers, memory ranges and a system log tail. The integration writes each distinct report to `<config>/pulse_eight_crashes/` as its own file (the newest 50 are kept) and raises one persistent notification with the fault line and the file path. The report is never put in entity state or diagnostics. A report that is re-sent is not archived twice.
 
-**Source filter.** Off by default. When you turn on **Only accept listener connections from the matrix**, both listeners reject any peer that is not the matrix's address, before parsing anything. If your router rewrites the matrix's source address, list the address Home Assistant actually sees in **Additional trusted source addresses** (comma separated). With the filter on and no known address, nothing is accepted. This is a convenience on top of proper firewalling, not a replacement for it: the legacy protocols have no cryptographic authentication.
+**Source filter.** Both listeners always reject any peer that is not the matrix's address, before parsing anything. If your router rewrites the matrix's source address, list the address Home Assistant actually sees in **Additional trusted source addresses** (comma separated). With no known address, nothing is accepted. This is a convenience on top of proper firewalling, not a replacement for it: the legacy protocols have no cryptographic authentication.
 
 Raw UDP events (`pulse_eight_udp_packet`) are off by default for protocol investigation. They carry local names and identifiers and can be chatty.
 

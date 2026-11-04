@@ -57,7 +57,6 @@
           "cloud_enabled": "Enable optional local cloud listeners",
           "cloud_port": "Local cloud TCP port",
           "monitoring_port": "Monitoring HTTP port",
-          "source_filter": "Only accept listener connections from the matrix",
           "trusted_sources": "Additional trusted source addresses, comma separated (for example a NAT gateway)",
           "raw_events": "Publish diagnostic UDP events",
           "firmware_check_enabled": "Check vendor firmware metadata daily and notify",

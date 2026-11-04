@@ -12,7 +12,6 @@ PLATFORMS = [
     Platform.TEXT,
     Platform.MEDIA_PLAYER,
     Platform.REMOTE,
-    Platform.NUMBER,
     Platform.UPDATE,
 ]
 UDP_PORT = 8811
@@ -20,7 +19,6 @@ DEFAULT_OPTIONS = {
     "udp_port": UDP_PORT,
     "stale_seconds": 180,
     "cloud_enabled": False,
-    "source_filter": False,
     "trusted_sources": "",
     "cloud_port": 18989,
     "monitoring_port": 18080,

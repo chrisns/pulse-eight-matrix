@@ -39,7 +39,7 @@ The latest packet cache is capped at 32 message types, counters are bounded by a
 
 Config flows support manual, DHCP, SSDP and native UDP discovery confirmation. Serial-number unique IDs prevent duplicates; reconfigure and reauthentication keep the original identity. Default setup does not enable cloud listeners or alter network/device configuration. Options reload the entry. Multiple matrices share UDP reception; give optional TCP/monitoring listeners unique ports per entry.
 
-The parent matrix and each input/output have stable device/entity identifiers. Input/output device names follow matrix labels while preserving HA user-assigned names. Routing, EDID, IR profiles, CEC behavior and panel settings use typed entities/actions. Audio DSP number entities are created only when compatible ports are reported; physical DSP hardware has not been tested.
+The parent matrix and each input/output have stable device/entity identifiers. Input/output device names follow matrix labels while preserving HA user-assigned names. Routing, EDID, IR profiles, CEC behavior and panel settings use typed entities/actions. Audio DSP controls are not exposed because physical DSP hardware has not been tested.
 
 On unload, accepted cloud connections are closed and handler tasks completed before waiting for the TCP server. This ordering is required by Python 3.13+; otherwise an active socket can prevent entry reload from finishing. The UDP receiver remains alive while another matrix still uses it and is closed after the last entry unloads.
 
