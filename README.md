@@ -30,11 +30,16 @@ I run it against an **FF88 on MatrixOS 3.10.5-1** with Home Assistant **2026.10*
 
 ## Install
 
-### HACS (custom repository)
+### HACS
 
-1. In HACS, open the menu, choose **Custom repositories**, add `https://github.com/chrisns/pulse-eight-matrix` as an **Integration**.
+1. In HACS, search for **Pulse-Eight Matrix**.
 2. Install **Pulse-Eight Matrix** and restart Home Assistant.
 3. Go to **Settings, Devices & services, Add integration, Pulse-Eight Matrix**.
+
+Until the integration appears in the default HACS catalog, open the HACS menu,
+choose **Custom repositories**, add
+`https://github.com/chrisns/pulse-eight-matrix` as an **Integration**, and then
+follow the same steps.
 
 ### Manual
 

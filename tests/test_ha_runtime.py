@@ -252,8 +252,8 @@ class HARuntimeTests(unittest.IsolatedAsyncioTestCase):
             request=request,
             host="192.168.12.34",
         )
-        a = MatrixHub(hass, entry, None)
-        b = MatrixHub(hass, entry, None)
+        a = MatrixHub(hass, entry, None, None)
+        b = MatrixHub(hass, entry, None, None)
         a.client = client
         b.client = client
         timers = []
@@ -278,6 +278,20 @@ class HARuntimeTests(unittest.IsolatedAsyncioTestCase):
             self.assertIsNone(broker.transport)
             unsub.assert_called_once()
 
+    async def test_matrix_and_firmware_http_sessions_are_separate(self):
+        matrix_session = object()
+        firmware_session = object()
+        hub = MatrixHub(
+            types.SimpleNamespace(),
+            types.SimpleNamespace(
+                data={"host": "matrix.local", "serial": "P8SNTEST"}, options={}
+            ),
+            matrix_session,
+            firmware_session=firmware_session,
+        )
+        self.assertIs(hub.client.session, matrix_session)
+        self.assertIs(hub.firmware.session, firmware_session)
+
     async def test_accepted_command_readback_failure_is_explicit(self):
         from homeassistant.exceptions import HomeAssistantError
 
@@ -288,6 +302,7 @@ class HARuntimeTests(unittest.IsolatedAsyncioTestCase):
             types.SimpleNamespace(
                 data={"host": "matrix.local", "serial": "P8SNTEST"}, options={}
             ),
+            None,
             None,
         )
         h.client.request = AsyncMock(return_value={"Result": True})
@@ -342,6 +357,53 @@ class HAFlowTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(AbortFlow):
             await f.async_step_user({"host": "192.168.1.2", "password": ""})
         f.async_set_unique_id.assert_awaited_once_with("P8SNTEST")
+
+    async def test_validation_uses_private_unsafe_cookie_jar_and_detaches(self):
+        from custom_components.pulse_eight import config_flow
+        from custom_components.pulse_eight.config_flow import PulseEightConfigFlow
+
+        flow = PulseEightConfigFlow()
+        flow.hass = MagicMock()
+        session = MagicMock()
+        client = MagicMock()
+        client.identity = AsyncMock(
+            return_value={"Serial": "P8SNTEST", "Model": "FF88"}
+        )
+        with (
+            patch.object(
+                config_flow, "async_create_clientsession", return_value=session
+            ) as create,
+            patch.object(config_flow, "MatrixClient", return_value=client),
+        ):
+            result = await flow._validate(
+                {"host": "192.168.1.2", "password": "admin"}
+            )
+        self.assertEqual(result["Serial"], "P8SNTEST")
+        kwargs = create.call_args.kwargs
+        self.assertFalse(kwargs["auto_cleanup"])
+        self.assertTrue(kwargs["cookie_jar"]._unsafe)
+        client.identity.assert_awaited_once()
+        session.detach.assert_called_once()
+
+    async def test_validation_detaches_private_session_on_failure(self):
+        from custom_components.pulse_eight import config_flow
+        from custom_components.pulse_eight.client import MatrixError
+        from custom_components.pulse_eight.config_flow import PulseEightConfigFlow
+
+        flow = PulseEightConfigFlow()
+        flow.hass = MagicMock()
+        session = MagicMock()
+        client = MagicMock()
+        client.identity = AsyncMock(side_effect=MatrixError("offline"))
+        with (
+            patch.object(
+                config_flow, "async_create_clientsession", return_value=session
+            ),
+            patch.object(config_flow, "MatrixClient", return_value=client),
+        ):
+            with self.assertRaises(MatrixError):
+                await flow._validate({"host": "192.168.1.2", "password": ""})
+        session.detach.assert_called_once()
 
     async def test_options_default_cloud_disabled_and_port_conflict(self):
         from unittest.mock import PropertyMock
@@ -477,6 +539,7 @@ class FirmwareAndHardeningTests(unittest.IsolatedAsyncioTestCase):
             types.SimpleNamespace(
                 data={"host": "matrix.local", "serial": "P8SNTEST"}, options={}
             ),
+            None,
             None,
         )
         good = MagicMock()

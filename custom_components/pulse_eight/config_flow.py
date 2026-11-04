@@ -5,10 +5,11 @@ from __future__ import annotations
 from urllib.parse import urlsplit
 
 import voluptuous as vol
+from aiohttp import CookieJar
 from homeassistant import config_entries
 from homeassistant.const import CONF_HOST, CONF_PASSWORD
 from homeassistant.core import callback
-from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers.aiohttp_client import async_create_clientsession
 
 from .client import MatrixAuthError, MatrixClient, MatrixError, validate_host
 from .const import DEFAULT_OPTIONS, DOMAIN
@@ -19,12 +20,23 @@ class PulseEightConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     _discovered = None
 
     async def _validate(self, data):
-        client = MatrixClient(
-            async_get_clientsession(self.hass),
-            data[CONF_HOST],
-            data.get(CONF_PASSWORD, ""),
+        # Validation must not share authentication cookies with another flow,
+        # config entry or integration. auto_cleanup=False lets us detach the
+        # temporary session immediately instead of retaining it until HA stops.
+        session = async_create_clientsession(
+            self.hass,
+            auto_cleanup=False,
+            cookie_jar=CookieJar(unsafe=True),
         )
-        return await client.identity()
+        try:
+            client = MatrixClient(
+                session,
+                data[CONF_HOST],
+                data.get(CONF_PASSWORD, ""),
+            )
+            return await client.identity()
+        finally:
+            session.detach()
 
     async def async_step_user(self, user_input=None):
         errors = {}

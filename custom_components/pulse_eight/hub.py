@@ -25,13 +25,13 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class MatrixHub:
-    def __init__(self, hass, entry, session):
+    def __init__(self, hass, entry, matrix_session, firmware_session):
         self.hass = hass
         self.entry = entry
         self.serial = entry.data["serial"]
         self.options = {**DEFAULT_OPTIONS, **entry.options}
         self.client = MatrixClient(
-            session, entry.data["host"], entry.data.get("password", "")
+            matrix_session, entry.data["host"], entry.data.get("password", "")
         )
         self.state = MatrixState()
         self.listeners = set()
@@ -43,7 +43,7 @@ class MatrixHub:
         self._last_notify = 0.0
         self._notify_handle = None
         self._last_raw = {}
-        self.firmware = FirmwareMonitor(self, session)
+        self.firmware = FirmwareMonitor(self, firmware_session)
         self.crashes = None
         self.stopping = False
 

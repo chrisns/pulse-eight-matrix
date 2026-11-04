@@ -1,6 +1,6 @@
 # Adversarial review of the native integration
 
-Review date: 29 October 2026. Source changes are in 0.3.0. This is a bounded code/protocol review and regression suite, not a proof that the integration or legacy firmware has no remaining vulnerabilities.
+Review date: 4 November 2026. Source changes are through 0.4.2. This is a bounded code/protocol review and regression suite, not a proof that the integration or legacy firmware has no remaining vulnerabilities.
 
 | Finding | Change and regression coverage |
 | --- | --- |
@@ -17,6 +17,7 @@ Review date: 29 October 2026. Source changes are in 0.3.0. This is a bounded cod
 | A failing entity callback interrupted updates to every later entity | Isolate callback failures, log them and continue other entities; HA-runtime regression test |
 | Port inventory stopped early but Refresh returned success | Return a completion boolean and propagate it in the action response |
 | Registry creation failure or HA shutdown could leave listeners/tasks running | Clean up a started hub on registry errors; stop hub tasks and optional listeners on HA stop; suppress post-stop state updates |
+| Matrix password cookies were stored in Home Assistant's shared HTTP session, whose safe default also rejects cookies from IP-address hosts | Give every config entry and validation attempt its own cookie jar with explicit IP-cookie support; detach temporary flow sessions in all outcomes; keep the vendor firmware client on HA's separate safe session |
 | Update checking could inadvertently reintroduce firmware download/installation or endpoint injection | Fixed metadata endpoint, bounded JSON, no redirects, strict offered-image URL/family/version validation, no image fetch, read-only HA update entity |
 | Restarts/manual refreshes could repeatedly poll the vendor or notify every day for the same offer | Persist last attempt and notified version, serialize checks, daily gating and one-minute manual limit; isolated HA tests cover restarts/dedupe/failure/disabled mode |
 
@@ -33,8 +34,10 @@ The existing no-retry mutation policy, 45-second serialized local HTTP calls, 30
 
 ## Verified outcome
 
-The suite has 69 tests: protocol, transport and security tests that run on the host, and Home Assistant runtime tests that run in the HA container image. The HA tests exercise the real update state renderer and the real persistent-notification component, including notification creation and dismissal.
+The suite includes protocol, transport and security tests that run on the host, and Home Assistant runtime tests that run in the HA container image. Cookie regressions exercise a real HTTP server on an IP address: the safe default jar demonstrably rejects the matrix cookie, the dedicated unsafe jar authenticates, and a second session cannot inherit the first session's login. The HA tests verify temporary-session cleanup and separation of the local matrix and external firmware clients, as well as the real update state renderer and persistent-notification component.
 
 Checked against a real FF88 on HA 2026.10: the entry loads, UDP arrives, the optional TCP cloud connection establishes, the firmware check reaches the vendor metadata service, and invalid CEC action input is rejected before transmission. No real new-version offer exists to test against, so the positive-update notification branch uses a synthetic response in the HA tests.
+
+The live FF88's `/Account/Login` response sets no cookie and its identity endpoint remains readable with either cookie policy. That device therefore cannot prove the authenticated-cookie branch; the real IP-host cookie behavior is covered by the local HTTP regression server instead.
 
 A feature-flag type error found during the first live restart was corrected and covered by a regression test. A proposed plural device-registry API change was reverted after the HA runtime flagged it as deprecated.

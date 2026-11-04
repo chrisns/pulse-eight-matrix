@@ -30,5 +30,5 @@
       "deviceType": "urn:schemas-upnp-org:device:Basic:1"
     }
   ],
-  "version": "0.4.1"
+  "version": "0.4.2"
 }

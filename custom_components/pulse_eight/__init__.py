@@ -4,11 +4,16 @@ from __future__ import annotations
 
 import logging
 
+from aiohttp import CookieJar
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EVENT_HOMEASSISTANT_STOP
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers import device_registry as dr
-from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers.aiohttp_client import (
+    async_create_clientsession,
+    async_get_clientsession,
+)
 
 from .client import MatrixAuthError, MatrixError
 from .const import DOMAIN, PLATFORMS
@@ -17,6 +22,8 @@ from .services import async_register_services
 
 _LOGGER = logging.getLogger(__name__)
 
+CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
+
 
 async def async_setup(hass, config):
     async_register_services(hass)
@@ -24,7 +31,17 @@ async def async_setup(hass, config):
 
 
 async def async_setup_entry(hass, entry: ConfigEntry):
-    hub = MatrixHub(hass, entry, async_get_clientsession(hass))
+    # MatrixOS authenticates IP-address hosts with a session cookie. aiohttp
+    # rejects those cookies by default, so each config entry gets an isolated,
+    # permissive jar. Home Assistant detaches this session on entry unload.
+    matrix_session = async_create_clientsession(
+        hass, cookie_jar=CookieJar(unsafe=True)
+    )
+    # Keep the vendor firmware check on HA's normal safe shared session. This
+    # ensures the matrix's admin cookie cannot leave the local-device client.
+    hub = MatrixHub(
+        hass, entry, matrix_session, firmware_session=async_get_clientsession(hass)
+    )
     try:
         await hub.start()
     except MatrixAuthError as exc:

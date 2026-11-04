@@ -9,7 +9,7 @@ import types
 import unittest
 from pathlib import Path
 
-from aiohttp import ClientSession, TCPConnector, web
+from aiohttp import ClientSession, CookieJar, TCPConnector, web
 from aiohttp.abc import AbstractResolver
 
 ROOT = Path(__file__).resolve().parents[1] / "custom_components/pulse_eight"
@@ -201,6 +201,7 @@ class ClientTests(unittest.IsolatedAsyncioTestCase):
         self.active = 0
         self.max_active = 0
         self.auth_ok = True
+        self.require_cookie = False
 
         async def handler(request):
             self.active += 1
@@ -209,7 +210,10 @@ class ClientTests(unittest.IsolatedAsyncioTestCase):
             try:
                 await asyncio.sleep(0.01)
                 if request.path == "/Account/Login":
-                    return web.json_response({"Result": self.auth_ok})
+                    response = web.json_response({"Result": self.auth_ok})
+                    if self.auth_ok:
+                        response.set_cookie("matrix_session", "authenticated")
+                    return response
                 if request.path == "/CEC/AutoPause":
                     return web.json_response({"Result": False})
                 if request.path == "/forbidden":
@@ -225,6 +229,10 @@ class ClientTests(unittest.IsolatedAsyncioTestCase):
                 if request.path == "/invalid":
                     return web.Response(text="not JSON")
                 if request.path == "/System/Details":
+                    if self.require_cookie and request.cookies.get(
+                        "matrix_session"
+                    ) != "authenticated":
+                        return web.Response(status=403)
                     return web.json_response(
                         {
                             "Result": True,
@@ -243,9 +251,9 @@ class ClientTests(unittest.IsolatedAsyncioTestCase):
         await self.runner.setup()
         site = web.TCPSite(self.runner, "127.0.0.1", 0)
         await site.start()
-        port = site._server.sockets[0].getsockname()[1]
+        self.port = site._server.sockets[0].getsockname()[1]
         self.session = ClientSession(connector=TCPConnector(resolver=Resolver()))
-        self.client = MatrixClient(self.session, "matrix.test", port=port)
+        self.client = MatrixClient(self.session, "matrix.test", port=self.port)
 
     async def asyncTearDown(self):
         await self.session.close()
@@ -269,6 +277,42 @@ class ClientTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(MatrixAuthError):
             await self.client.identity()
         self.assertEqual(self.calls, [("POST", "/Account/Login")])
+
+    async def test_ip_address_password_login_accepts_device_cookie(self):
+        self.require_cookie = True
+        async with ClientSession(cookie_jar=CookieJar(unsafe=True)) as session:
+            client = MatrixClient(session, "matrix.test", "admin", self.port)
+            client.host = "127.0.0.1"  # Exercise an IP URL; loopback is UI-invalid.
+            self.assertEqual((await client.identity())["Serial"], "P8SN123")
+        self.assertEqual(
+            self.calls,
+            [("POST", "/Account/Login"), ("GET", "/System/Details")],
+        )
+
+    async def test_default_cookie_jar_rejects_ip_address_cookie(self):
+        self.require_cookie = True
+        async with ClientSession() as session:
+            client = MatrixClient(session, "matrix.test", "admin", self.port)
+            client.host = "127.0.0.1"  # Exercise an IP URL; loopback is UI-invalid.
+            with self.assertRaises(MatrixAuthError):
+                await client.identity()
+        self.assertEqual(
+            self.calls,
+            [("POST", "/Account/Login"), ("GET", "/System/Details")],
+        )
+
+    async def test_authentication_cookie_is_not_shared_between_sessions(self):
+        self.require_cookie = True
+        async with (
+            ClientSession(cookie_jar=CookieJar(unsafe=True)) as first_session,
+            ClientSession(cookie_jar=CookieJar(unsafe=True)) as second_session,
+        ):
+            first = MatrixClient(first_session, "matrix.test", "admin", self.port)
+            second = MatrixClient(second_session, "matrix.test", port=self.port)
+            first.host = second.host = "127.0.0.1"
+            self.assertEqual((await first.identity())["Serial"], "P8SN123")
+            with self.assertRaises(MatrixAuthError):
+                await second.identity()
 
     async def test_false_autopause_is_valid_state(self):
         self.assertFalse((await self.client.request("/CEC/AutoPause"))["Result"])
